@@ -97,9 +97,8 @@ class ModelTrainer:
     
 def main():
     # Set the MLflow tracking URI to Databricks
-    os.environ['MLFLOW_TRACKING_URI'] = 'databricks'
     mlflow.set_tracking_uri("databricks")
-    mlflow.set_experiment("/Users/kehinde.awomuti@pwc.com/NBA_XGB")
+    mlflow.set_experiment("/Users/***.***@***.com/NBA_XGB")
     X, y = input_data()
     X = X.astype("float64")
     y = y.astype("float64")

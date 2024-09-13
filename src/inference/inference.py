@@ -10,6 +10,7 @@ import logging
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
+#custom class to help with custom inference workloads
 class PlayerPredictionModel(PythonModel):
     def __init__(self, model_name, model_version):
         self.model_name = model_name
@@ -19,6 +20,11 @@ class PlayerPredictionModel(PythonModel):
         self.cols = None
 
     def load_context(self, context):
+        """
+        This function loads the base XGBoost model from databricks model registry, the features and inference data 
+        from databricks file system.
+        """
+        #initialise the databricks workspace client
         workspace = WorkspaceClient()  
         # Load the base model from Model Registry
         try:
@@ -30,7 +36,7 @@ class PlayerPredictionModel(PythonModel):
             logger.error(f"Failed to load base model: {str(e)}")
             raise RuntimeError(f"Failed to load base model: {str(e)}")
         
-        # Load columns from DBFS
+        # Load features from DBFS
         try:
             pkl_content = workspace.dbfs.download("dbfs:/FileStore/features.pkl")
             pkl_str = pkl_content.read()
@@ -40,7 +46,7 @@ class PlayerPredictionModel(PythonModel):
             logger.error(f"Failed to load column information: {str(e)}")
             raise RuntimeError(f"Failed to load column information: {str(e)}")
         
-        # Load player data from DBFS
+        # Load inference data from DBFS
         try:
             file_content = workspace.dbfs.download("dbfs:/FileStore/inference_data.csv")
             file_str = file_content.read()
@@ -91,7 +97,7 @@ class PlayerPredictionModel(PythonModel):
         # Round numeric columns to 2 decimal places
         player_averages[cols_to_use] = player_averages[cols_to_use].round(2)
 
-        # Check for truly missing players (not in the dataset at all)
+        # Check for truly missing players i.e unavailable players
         missing_players = set(player_names) - set(player_averages['Player'])
         if missing_players:
             print(f"No data found for players: {missing_players}")
@@ -102,8 +108,10 @@ class PlayerPredictionModel(PythonModel):
         return player_averages
 
     def predict(self, context, model_input):
-        logger.info(f"Received model_input: {model_input}")
-        
+        """
+        This function defines the predict context of the custom model, routing it to the base XGBoost Model
+        """
+        logger.info(f"Received model_input: {model_input}")        
         if isinstance(model_input, pd.DataFrame):
             if 'Player' not in model_input.columns:
                 raise ValueError("Input DataFrame must have a 'Player' column")
@@ -113,18 +121,16 @@ class PlayerPredictionModel(PythonModel):
         elif isinstance(model_input, str):
             player_names = [model_input]
         else:
-            raise ValueError("Input must be a DataFrame, list, or string")
-        
+            raise ValueError("Input must be a DataFrame, list, or string")      
         logger.info(f"Processing players: {player_names}")
-        
+       
         try:
             input_data = self.calculate_player_averages(player_names)
             logger.debug(f"Preprocessed input data shape: {input_data.shape}")
             logger.debug(f"Preprocessed input data columns: {input_data.columns}")
         except Exception as e:
             logger.error(f"Error calculating player statistics: {str(e)}")
-            raise ValueError(f"Error calculating player statistics: {str(e)}")
-        
+            raise ValueError(f"Error calculating player statistics: {str(e)}")        
         result_df = pd.DataFrame({'Player': player_names})
         
         try:
@@ -166,7 +172,7 @@ MODEL_VERSION = "1"
 
 mlflow.set_tracking_uri("databricks")
 
-experiment_id = mlflow.get_experiment_by_name("/Users/kehinde.awomuti@pwc.com/NBA_XGB").experiment_id
+experiment_id = mlflow.get_experiment_by_name("/Users/***.***@***.com/NBA_XGB").experiment_id
 # Start an MLflow run
 with mlflow.start_run(experiment_id= experiment_id, run_name="XGBoost_Model_Final") as run:
     # Create an instance of the custom model
