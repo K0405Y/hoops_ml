@@ -1,0 +1,74 @@
+import os
+import pandas as pd
+import requests
+from bs4 import BeautifulSoup
+from io import StringIO
+
+# Function to get NBA player advanced stats for a given year
+def get_nba_player_advanced_stats(year):
+    url = f"https://www.basketball-reference.com/leagues/NBA_{year}_advanced.html"
+    response = requests.get(url)
+    soup = BeautifulSoup(response.text, 'html.parser')
+
+    # Extract the table
+    table = soup.find('table', {'id': 'advanced_stats'})
+    df = pd.read_html(StringIO(str(table)))[0]
+
+    # Remove rows where the 'Age' column contains 'Age'
+    df = df[df['Age'] != 'Age']
+
+    return df
+
+# Initialize a dictionary to store data frames for each year
+all_advanced_stats = {}
+
+# Loop through years from 2004 to 2024
+for year in range(2004, 2025):
+    advanced_stats_for_year = get_nba_player_advanced_stats(year)
+    advanced_stats_for_year['Year'] = year  # Add a 'Year' column
+    all_advanced_stats[year] = advanced_stats_for_year
+
+# Combine all data frames into a single data frame
+PlayerAdvancedStats = pd.concat(all_advanced_stats.values(), ignore_index=True)
+
+# Remove columns with all NA values
+PlayerAdvancedStats.dropna(axis=1, how='all', inplace=True)
+
+# Rename columns
+PlayerAdvancedStats.rename(columns={
+    "TS%": "TS.",
+    "3PAr": "3PAr",
+    "ORB%": "ORB.",
+    "DRB%": "DRB.",
+    "TRB%": "TRB.",
+    "AST%": "AST.",
+    "STL%": "STL.",
+    "BLK%": "BLK.",
+    "TOV%": "TOV."
+}, inplace=True)
+
+# Extract the first position before the hyphen to standardize positions
+PlayerAdvancedStats['Pos'] = PlayerAdvancedStats['Pos'].str.split('-').str[0]
+
+# Define the directory path
+directory_path = "C:\\hoops_ml\\data\\raw\\Regular Season Player Advanced Stats"
+
+# Check if the directory exists
+if not os.path.exists(directory_path):
+    try:
+        os.makedirs(directory_path)
+        print(f"Directory {directory_path} created successfully.")
+    except Exception as e:
+        print(f"Failed to create directory {directory_path}. Error: {e}")
+else:
+    print(f"Directory {directory_path} already exists.")
+
+# Define the file path for the CSV file
+csv_filename = os.path.join(directory_path, "PlayerAdvancedStats04-24.csv")
+
+# Save the data frame to a CSV file
+try:
+    PlayerAdvancedStats.to_csv(csv_filename, encoding='latin1', index=False)
+    print(f"Data successfully written to {csv_filename}.")
+except Exception as e:
+    print(f"Failed to write data to {csv_filename}. Error: {e}")

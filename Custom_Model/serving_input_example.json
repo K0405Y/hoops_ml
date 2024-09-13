@@ -1,0 +1,15 @@
+{
+  "dataframe_split": {
+    "columns": [
+      "Player"
+    ],
+    "data": [
+      [
+        "LeBron James"
+      ],
+      [
+        "Stephen Curry"
+      ]
+    ]
+  }
+}
