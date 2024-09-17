@@ -92,7 +92,7 @@ class ModelTrainer:
             # Log the best model with signature
             signature = mlflow.models.infer_signature(X_train.iloc[[0]], best_model.predict(X_train.iloc[[0]]))
             mlflow.xgboost.log_model(best_model, "best_model", signature=signature, input_example = X_train.iloc[[0]],
-                                      registered_model_name = "NBA_XGB", conda_env = "C:/hoops_ml/conda copy.yaml")                                             
+                                      registered_model_name = "NBA_XGB", conda_env = "C:/hoops_ml/conda.yaml")                                             
         return None
     
 def main():

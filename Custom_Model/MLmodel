@@ -10,8 +10,8 @@ flavors:
     python_version: 3.11.1
     streamable: false
 mlflow_version: 2.16.0
-model_size_bytes: 11292
-model_uuid: 59a4b0ca70b44cf3b3d23529d092b44c
+model_size_bytes: 11835
+model_uuid: 89eadc2be6284c59ae31c38bb8caaf9b
 saved_input_example_info:
   artifact_path: input_example.json
   pandas_orient: split
@@ -21,4 +21,4 @@ signature:
   inputs: '[{"type": "string", "name": "Player", "required": true}]'
   outputs: '[{"type": "tensor", "tensor-spec": {"dtype": "float32", "shape": [-1]}}]'
   params: null
-utc_time_created: '2024-09-12 12:02:21.067539'
+utc_time_created: '2024-09-17 09:58:37.308750'

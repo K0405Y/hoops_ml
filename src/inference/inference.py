@@ -6,6 +6,7 @@ import pickle as pkl
 import io
 from databricks.sdk import WorkspaceClient
 import logging
+import os
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
@@ -24,8 +25,14 @@ class PlayerPredictionModel(PythonModel):
         This function loads the base XGBoost model from databricks model registry, the features and inference data 
         from databricks file system.
         """
-        #initialise the databricks workspace client
-        workspace = WorkspaceClient()  
+        workspace = WorkspaceClient()
+
+        if "DATABRICKS_RUNTIME_VERSION" in os.environ:
+            #to bypass Databricks serving environment issues
+            mlflow.set_tracking_uri("databricks")
+        else:
+            #using local MLflow tracking URI
+            mlflow.set_tracking_uri("databricks")
         # Load the base model from Model Registry
         try:
             self.base_model = mlflow.pyfunc.load_model(
@@ -186,7 +193,7 @@ with mlflow.start_run(experiment_id= experiment_id, run_name="XGBoost_Model_Fina
         signature=mlflow.models.ModelSignature(
             inputs=mlflow.types.Schema([mlflow.types.ColSpec(type="string", name="Player")]),
             outputs=mlflow.types.Schema([mlflow.types.TensorSpec(type=np.dtype('float32'), shape=(-1,))])),
-        conda_env = "C:/hoops_ml/conda copy.yaml"
+        conda_env = "C:/hoops_ml/conda.yaml"
     )    
     # Log the model
     mlflow.pyfunc.log_model(
@@ -197,5 +204,5 @@ with mlflow.start_run(experiment_id= experiment_id, run_name="XGBoost_Model_Fina
             inputs=mlflow.types.Schema([mlflow.types.ColSpec(type="string", name="Player")]),
             outputs=mlflow.types.Schema([mlflow.types.TensorSpec(type=np.dtype('float32'), shape=(-1,))])),
         registered_model_name="NBA_XGB_Final",
-        conda_env = "C:/hoops_ml/conda copy.yaml"
+        conda_env = "C:/hoops_ml/conda.yaml"
     )
