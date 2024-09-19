@@ -54,16 +54,17 @@ class PlayerPredictionModel(PythonModel):
             raise RuntimeError(f"Failed to load column information: {str(e)}")
         
         # Load inference data from DBFS
-        try:
+        try:    
+            #download the data
             file_content = workspace.dbfs.download("dbfs:/FileStore/inference_data.csv")
             file_str = file_content.read()
+            #convert to readable format before reading as csv
             file_content_stream = io.BytesIO(file_str)
             self.player_data = pd.read_csv(file_content_stream, encoding="latin1")
-            
-            # Preprocess the entire dataset
+                      
+            # Preprocess the inference data
             self.player_data = self.player_data.sort_values(['Player', 'Year', 'G'], ascending=[True, False, False])
-            self.player_data = self.player_data.groupby(['Player', 'Year']).first().reset_index()
-            
+            self.player_data = self.player_data.groupby(['Player', 'Year']).first().reset_index()           
             logger.info(f"Player data loaded and preprocessed. Shape: {self.player_data.shape}")
             logger.debug(f"Player data columns: {self.player_data.columns}")
             logger.debug(f"First few rows of preprocessed player data:\n{self.player_data.head()}")

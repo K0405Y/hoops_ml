@@ -11,7 +11,6 @@ from sklearn.metrics import r2_score, mean_squared_error
 from xgboost import XGBRegressor
 from scipy.stats import uniform, randint
 
-
 # Define the input function
 def input_data():
     data = merge_data()
