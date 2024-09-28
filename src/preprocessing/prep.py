@@ -14,8 +14,8 @@ def merge_data():
     #set file paths
     file_path1 = "C:/hoops_ml/data/raw/Regular Season Player PerGame Stats/PlayerPerGameStats04-24.csv"
     file_path2 = "C:/hoops_ml/data/raw/Regular Season Player Advanced Stats/PlayerAdvancedStats04-24.csv"
-    data1 = pd.read_csv(file_path1, encoding="latin1")
-    data2 = pd.read_csv(file_path2, encoding="latin1")
+    data1 = pd.read_csv(file_path1)
+    data2 = pd.read_csv(file_path2)
     # Drop unnecessary columns
     data1 = data1.drop(['Year', 'Team', 'Rk', 'Awards'], axis=1)
     data1 = data1[data1['Player'] != 'League Average']
@@ -28,7 +28,7 @@ def merge_data():
     #initilaise databricks client to write to dbfs
     workspace = WorkspaceClient()
     csv_bytes = io.BytesIO()
-    data.to_csv(csv_bytes, index=False, encoding='latin1')
+    data.to_csv(csv_bytes, index=False)
     csv_bytes.seek(0)  # Rewind the BytesIO object to the beginning
     #upload file as inference data to dbfs
     workspace.dbfs.upload(src= csv_bytes, path="dbfs:/FileStore/inference_data.csv", overwrite= True)

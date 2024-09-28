@@ -3,24 +3,30 @@ import pandas as pd
 import requests
 from bs4 import BeautifulSoup
 from io import StringIO
+from unidecode import unidecode
 
 # Function to get NBA player stats for a given year
 def get_nba_player_stats(year):
     url = f"https://www.basketball-reference.com/leagues/NBA_{year}_per_game.html"
     response = requests.get(url)
+    response.encoding = 'utf-8' #to address player names with special characters
     soup = BeautifulSoup(response.text, 'html.parser')
 
     # Extract the table
     table = soup.find('table', {'id': 'per_game_stats'})
-    df = pd.read_html(StringIO(str(table)))[0]
+
+    # lxml parser for better handling of special characters
+    df = pd.read_html(StringIO(str(table)), encoding='utf-8', flavor='lxml')[0]
 
     # Remove rows where the 'Age' column contains 'Age'
     df = df[df['Age'] != 'Age']
 
+    # Clean player names
+    df['Player'] = df['Player'].apply(lambda x: unidecode(x) if pd.notnull(x) else x)
+
     return df
 
-
-# Initialize a dictionary to store data frames for each year
+# Initialize a dictionary to store data for each year
 all_stats = {}
 
 # Loop through years from 2004 to 2024
@@ -28,6 +34,7 @@ for year in range(2004, 2025):
     stats_for_year = get_nba_player_stats(year)
     stats_for_year['Year'] = year  # Add a 'Year' column
     all_stats[year] = stats_for_year
+    print(f"Player pergame stats for year {year} extracted")
 
 # Combine all data frames into a single data frame
 PlayerPerGameStats = pd.concat(all_stats.values(), ignore_index=True)
