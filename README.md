@@ -1,7 +1,7 @@
 # hoops_ml
  # NBA Points Per Game Prediction
 
-This project aims to predict NBA players' Points Per Game (PPG) using historical data and advanced statistics. It utilizes web scraping, data preprocessing, machine learning with XGBoost, and MLflow for experiment tracking and model management.
+This project aims to predict NBA players' Points Per Game (PPG) using historical data and advanced statistics. It utilizes web scraping, data preprocessing, machine learning with XGBoost, and MLflow for experiment tracking and model management. Model tracking, registering and final deployment all done on Azure Databricks. 
 
 ## Project Structure
 
