@@ -6,7 +6,17 @@ from io import StringIO
 from unidecode import unidecode
 
 # Function to get NBA player advanced stats for a given year
-def get_nba_player_advanced_stats(year):
+def get_nba_player_advanced_stats(year:int) -> pd.DataFrame:    
+    """
+    Function to extract player regular season advanced stats data from basketball reference
+    
+    Args:
+    year (int): The year in focus
+    
+    Returns: 
+    df: A dataframe of scraped data
+    
+    """
     url = f"https://www.basketball-reference.com/leagues/NBA_{year}_advanced.html"
     response = requests.get(url)
     response.encoding = 'utf-8' #to address player names with special characters

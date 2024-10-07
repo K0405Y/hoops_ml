@@ -6,11 +6,14 @@ import io
 import numpy as np
 
 #function to import two files needed and to append them
-def merge_data():
+def merge_data() -> pd.DataFrame:
     """
         This function imports regular season per game player data and advanced stats,
-         merges them into one with a some cleaning steps.
-        """
+        merges them into one with some cleaning steps.
+
+        Returns: 
+        data: A dataframe of merged data with some minor cleaning steps
+    """
     #set file paths
     file_path1 = "C:/hoops_ml/data/raw/Regular Season Player PerGame Stats/PlayerPerGameStats04-24.csv"
     file_path2 = "C:/hoops_ml/data/raw/Regular Season Player Advanced Stats/PlayerAdvancedStats04-24.csv"
@@ -34,11 +37,18 @@ def merge_data():
     workspace.dbfs.upload(src= csv_bytes, path="dbfs:/FileStore/inference_data.csv", overwrite= True)
     return data
 
-def preprocess_data(data, correlation_threshold=0.6):
-    """
+def preprocess_data(data:pd.DataFrame, correlation_threshold=0.6) -> pd.DataFrame:
+    """ 
         This function calculates the selects features by calculating the correlation coefficients
         and selecting the features above 0.6
-        """
+
+        Args: 
+        data(pd.DataFrame) : merged and cleaned data
+        correlation_threshold(float) : selection criterion
+
+        Returns:
+        final_data: a datafame of the features selected
+    """
     try:
         # Create a copy of the DataFrame 
         data = data.copy()

@@ -14,6 +14,9 @@ logger = logging.getLogger(__name__)
 #custom class to help with custom inference workloads
 class PlayerPredictionModel(PythonModel):
     def __init__(self, model_name, model_version):
+        """
+        PlayerPredictionModel class initialization
+        """
         self.model_name = model_name
         self.model_version = model_version
         self.base_model = None
@@ -22,18 +25,19 @@ class PlayerPredictionModel(PythonModel):
 
     def load_context(self, context):
         """
-        This function loads the base XGBoost model from databricks model registry, the features and inference data 
+        This function loads the base XGBoost model from databricks model registry, with the features and inference data loaded
         from databricks file system.
         """
         workspace = WorkspaceClient()
 
         if "DATABRICKS_RUNTIME_VERSION" in os.environ:
-            #to bypass Databricks serving environment issues
+            #to address Databricks serving environment issues
             mlflow.set_tracking_uri("databricks")
         else:
             #using local MLflow tracking URI
             mlflow.set_tracking_uri("databricks")
-        # Load the base model from Model Registry
+
+        # Load the base XGBoost model from Model Registry
         try:
             self.base_model = mlflow.pyfunc.load_model(
                 model_uri=f"models:/{self.model_name}/{self.model_version}"
@@ -72,10 +76,14 @@ class PlayerPredictionModel(PythonModel):
             logger.error(f"Failed to load or preprocess player data: {str(e)}")
             raise RuntimeError(f"Failed to load or preprocess player data: {str(e)}")
 
-    def calculate_player_averages(self, player_names):
+    def calculate_player_averages(self, player_names:list) -> pd.DataFrame:
         """
         This function calculates the averages of NBA player statistics for one or more players,
         including those with only one year of data.
+
+        Returns: 
+        player_averages: a dataframe of the player averages from the last 3 years, last 2 years for players with exactlt 2 years of available data 
+        and last 1 year for players with one year of available data(rookies)
         """
         # Ensure player_names is a list
         player_names = [player_names] if isinstance(player_names, str) else player_names
@@ -115,9 +123,12 @@ class PlayerPredictionModel(PythonModel):
         print(f"Calculated averages for {len(player_averages)} players")
         return player_averages
 
-    def predict(self, context, model_input):
+    def predict(self, context, model_input:pd.DataFrame) -> pd.DataFrame:
         """
         This function defines the predict context of the custom model, routing it to the base XGBoost Model
+
+        Returns:
+        result_df: a dataframe of input player names and their corresponding PPG predictions
         """
         logger.info(f"Received model_input: {model_input}")        
         if isinstance(model_input, pd.DataFrame):

@@ -12,7 +12,16 @@ from xgboost import XGBRegressor
 from scipy.stats import uniform, randint
 
 # Define the input function
-def input_data():
+def input_data()-> tuple[pd.DataFrame, pd.Series]:
+    """
+    This function prepares the input data for modelling and then returns the features and target as separate variables
+
+    Returns:
+    X: features dataframe
+
+    y: target series
+
+    """
     data = merge_data()
     data = preprocess_data(data) 
     X = data.drop('PTS', axis=1)
@@ -21,7 +30,10 @@ def input_data():
 
 # #train class
 class ModelTrainer:
-    def __init__(self, X, y):
+    def __init__(self, X:pd.DataFrame, y:pd.Series):
+        """
+        ModelTrainer class initialization
+        """
         self.X = X
         self.y = y
         self.model = XGBRegressor(random_state=42)
@@ -29,6 +41,9 @@ class ModelTrainer:
         self.best_score = None
 
     def train_models(self):
+        """
+        This fucntion establishes a random hyperparameter distribution with cross validation across each hyperparameter combinations
+        """
         param_distributions = {
             'max_depth': randint(3, 11),
             'learning_rate': uniform(0.01, 0.29),
