@@ -19,7 +19,7 @@ This project aims to predict NBA players' Points Per Game (PPG) using historical
    - `inference.py`: Implements custom inference logic for the trained model
 
 5. Testing
-   - `test.py`: Tests the deployed model with sample input
+   - `test notebook.ipynb`: Tests the deployed model with sample input
 
 ## Setup and Installation
 
@@ -80,7 +80,7 @@ This script sets up a custom MLflow model for inference, which can be used to pr
 To test the deployed model with sample input:
 
 ```
-python test.py
+test.ipynb
 ```
 
 This script loads the deployed model from the Databricks Model Registry and makes predictions using sample player names.
