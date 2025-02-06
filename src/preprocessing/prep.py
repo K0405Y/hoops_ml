@@ -8,34 +8,65 @@ import numpy as np
 #function to import two files needed and to append them
 def merge_data() -> pd.DataFrame:
     """
-        This function imports regular season per game player data and advanced stats,
-        merges them into one with some cleaning steps.
-
-        Returns: 
-        data: A dataframe of merged data with some minor cleaning steps
+    Imports and merges regular season per-game player data with advanced stats.
+    The function:
+    1. Reads player stats from two CSV files
+    2. Cleans and merges the datasets
+    3. Uploads the merged data to Databricks FileStore    
+    Returns:
+        pd.DataFrame: Merged and cleaned player statistics   
+    Raises:
+        FileNotFoundError: If source CSV files don't exist
+        pd.errors.EmptyDataError: If CSV files are empty
+        Exception: For other processing errors
     """
-    #set file paths
-    file_path1 = "C:/hoops_ml/data/raw/Regular Season Player PerGame Stats/PlayerPerGameStats04-24.csv"
-    file_path2 = "C:/hoops_ml/data/raw/Regular Season Player Advanced Stats/PlayerAdvancedStats04-24.csv"
-    data1 = pd.read_csv(file_path1)
-    data2 = pd.read_csv(file_path2)
-    # Drop unnecessary columns
-    data1 = data1.drop(['Year', 'Team', 'Rk', 'Awards'], axis=1)
-    data1 = data1[data1['Player'] != 'League Average']
-    data2 = data2.drop(['Age', 'MP', 'Player', 'Pos', 'Age', 'Tm', 'G', 'Rk'], axis=1)
-    #validate data
-    print(data1.shape)
-    print(data2.shape)
-    # Concatenate the dataframes
-    data = pd.concat([data1, data2], axis=1)
-    #initilaise databricks client to write to dbfs
-    workspace = WorkspaceClient()
-    csv_bytes = io.BytesIO()
-    data.to_csv(csv_bytes, index=False)
-    csv_bytes.seek(0)  # Rewind the BytesIO object to the beginning
-    #upload file as inference data to dbfs
-    workspace.dbfs.upload(src= csv_bytes, path="dbfs:/FileStore/inference_data.csv", overwrite= True)
-    return data
+    try:
+        # Define file paths
+        per_game_stats_path = "C:/hoops_ml/data/raw/Regular Season Player PerGame Stats/PlayerPerGameStats04-24.csv"
+        advanced_stats_path = "C:/hoops_ml/data/raw/Regular Season Player Advanced Stats/PlayerAdvancedStats04-24.csv"
+        
+        # Read CSV files
+        per_game_stats = pd.read_csv(per_game_stats_path)
+        advanced_stats = pd.read_csv(advanced_stats_path)
+        
+        # Log initial data shapes for validation
+        print(f"Per game stats shape: {per_game_stats.shape}")
+        print(f"Advanced stats shape: {advanced_stats.shape}")
+        
+        # Clean per-game stats
+        per_game_stats = (per_game_stats
+            .drop(['Year', 'Team', 'Rk', 'Awards'], axis=1)
+            .query('Player != "League Average"'))
+        
+        # Clean advanced stats
+        advanced_stats = advanced_stats.drop(
+            ['Age', 'MP', 'Player', 'Pos', 'Age', 'Tm', 'G', 'Rk'], 
+            axis=1
+        )
+        # Merge datasets
+        merged_stats = pd.concat([per_game_stats, advanced_stats], axis=1)
+        
+        # Upload to Databricks FileStore
+        workspace = WorkspaceClient()
+        csv_buffer = io.BytesIO()
+        merged_stats.to_csv(csv_buffer, index=False)
+        csv_buffer.seek(0)
+        
+        workspace.dbfs.upload(
+            src=csv_buffer,
+            path="dbfs:/FileStore/inference_data.csv",
+            overwrite=True
+        )
+        return merged_stats       
+    except FileNotFoundError as e:
+        print(f"Error: Source file not found - {e}")
+        raise
+    except pd.errors.EmptyDataError as e:
+        print(f"Error: One or both CSV files are empty - {e}")
+        raise
+    except Exception as e:
+        print(f"Error during data processing: {e}")
+        raise
 
 def preprocess_data(data:pd.DataFrame, correlation_threshold=0.6) -> pd.DataFrame:
     """ 
